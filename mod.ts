@@ -68,7 +68,7 @@ interface FileStatus {
 }
 class DenoKvFs {
   #enc = new TextEncoder();
-  static _dec = new TextDecoder();
+  static _dec: TextDecoder = new TextDecoder();
   #chunkSize: number = 65536;
   #maxPageSize: number = 1000;
   #oneSecondDelayMillis: number = 1000;
@@ -123,7 +123,10 @@ class DenoKvFs {
     return res;
   }
   //{cursor: "xxx", limit:1000} must be the last search parameter in the list.
-  static async *pagedListIterator(listParams: any[], kv: Deno.Kv) {
+  static async *pagedListIterator(
+    listParams: any[],
+    kv: Deno.Kv,
+  ): AsyncGenerator<any> {
     //@ts-ignore
     let entries = kv.list(...listParams);
     let finished: boolean = false;
