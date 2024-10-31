@@ -1,0 +1,5 @@
+{
+  "name": "@hviana/deno-kv-fs",
+  "version": "1.0.1",
+  "exports": "./mod.ts"
+}
