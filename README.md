@@ -408,7 +408,7 @@ import {
   FileStatus,
   ReadOptions,
   SaveOptions,
-} from "https://deno.land/x/deno_kv_fs/mod.ts";
+} from "jsr:@hviana/deno-kv-fs";
 ```
 
 ---
