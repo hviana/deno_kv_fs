@@ -63,6 +63,7 @@ The `save` method is used to save files:
 interface SaveOptions {
   path: string[]; // Mandatory. The root directory is []
   content: ReadableStream | Uint8Array | string; // Mandatory
+  metadata?: Record<string, any>; // Optional. Store additional data with the file (max 60KB)
   chunksPerSecond?: number;
   clientId?: string | number;
   validateAccess?: (path: string[]) => Promise<boolean> | boolean;
@@ -325,6 +326,53 @@ kvFs.onFileProgress = (status: FileStatus) => {
   webSocket.send(JSON.stringify(status));
 };
 ```
+
+---
+
+- **Get File Metadata:**
+
+  ```typescript
+  async getMetadata(path: string[]): Promise<Record<string, any> | undefined>;
+  ```
+
+- **Set File Metadata:**
+
+  ```typescript
+  async setMetadata(path: string[], metadata: Record<string, any>): Promise<void>;
+  ```
+
+### 📝 **Using File Metadata**
+
+You can store additional data along with your files:
+
+```typescript
+// Saving a file with metadata
+await kvFs.save({
+  path: ["my_dir", "image.jpg"],
+  content: imageStream,
+  metadata: {
+    author: "John Doe",
+    createdAt: new Date().toISOString(),
+    tags: ["vacation", "beach"],
+    location: {
+      lat: 25.7617,
+      lng: -80.1918
+    }
+  }
+});
+
+// Reading file metadata
+const metadata = await kvFs.getMetadata(["my_dir", "image.jpg"]);
+console.log(metadata.author); // "John Doe"
+
+// Updating metadata
+await kvFs.setMetadata(["my_dir", "image.jpg"], {
+  ...metadata,
+  lastModified: new Date().toISOString()
+});
+```
+
+> **Note:** Metadata is limited to 60KB when serialized as JSON to comply with Deno KV value size limits.
 
 ---
 

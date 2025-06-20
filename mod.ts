@@ -10,6 +10,7 @@ import { delay } from "./deps.ts";
 interface SaveOptions {
   path: string[];
   content: ReadableStream | Uint8Array | string;
+  metadata?: Record<string, any>;
   chunksPerSecond?: number;
   clientId?: string | number;
   validateAccess?: (path: string[]) => Promise<boolean> | boolean;
@@ -53,6 +54,7 @@ interface File {
   size: number;
   content?: ReadableStream<Uint8Array>;
   URIComponent?: string;
+  metadata?: Record<string, any>;
 }
 interface DirList {
   files: (File | FileStatus)[];
@@ -178,6 +180,22 @@ class DenoKvFs {
     if (status) {
       return status;
     }
+    
+    if (options.metadata) {
+      const metaSize = new TextEncoder().encode(JSON.stringify(options.metadata)).length;
+      if (metaSize > 60 * 1024) {
+        const status: FileStatus = {
+          URIComponent: uri,
+          path: options.path,
+          status: "error",
+          progress: 0,
+          msg: "Metadata exceeds 60KB limit",
+        };
+        this.onFileProgress(status);
+        return status;
+      }
+    }
+
     options = { ...defaultSaveOptions, ...options };
     if (options.validateAccess) {
       if (!(await options.validateAccess!(options.path))) {
@@ -192,6 +210,7 @@ class DenoKvFs {
         return status;
       }
     }
+	
     if (options.allowedExtensions!.length > 0) {
       const fileExt = options.path[options.path.length - 1].split(".").pop();
       if (!options.allowedExtensions!.includes(fileExt!)) {
@@ -246,6 +265,7 @@ class DenoKvFs {
       const file = {
         path: options.path,
         URIComponent: uri,
+        metadata: options.metadata || {},
         ...savingRes,
       };
       await this.#kv!.set(["deno_kv_fs", "files", ...options.path], file);
@@ -370,6 +390,25 @@ class DenoKvFs {
       }
     }
     return res;
+  }
+  async setMetadata(path: string[], metadata: Record<string, any>): Promise<void> {
+    const metaSize = new TextEncoder().encode(JSON.stringify(metadata)).length;
+    if (metaSize > 60 * 1024) {
+      throw new Error("Metadata exceeds 60KB limit");
+    }
+    
+    await this.#initKv();
+    const file = (await this.#kv!.get(["deno_kv_fs", "files", ...path])).value as File;
+    if (file) {
+      file.metadata = metadata;
+      await this.#kv!.set(["deno_kv_fs", "files", ...path], file);
+    }
+  }
+
+  async getMetadata(path: string[]): Promise<Record<string, any> | undefined> {
+    await this.#initKv();
+    const file = (await this.#kv!.get(["deno_kv_fs", "files", ...path])).value as File;
+    return file?.metadata;
   }
   async delete(options: ReadOptions): Promise<void | FileStatus> {
     const uri = this.pathToURIComponent(options.path);
