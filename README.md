@@ -356,9 +356,9 @@ await kvFs.save({
     tags: ["vacation", "beach"],
     location: {
       lat: 25.7617,
-      lng: -80.1918
-    }
-  }
+      lng: -80.1918,
+    },
+  },
 });
 
 // Reading file metadata
@@ -368,11 +368,12 @@ console.log(metadata.author); // "John Doe"
 // Updating metadata
 await kvFs.setMetadata(["my_dir", "image.jpg"], {
   ...metadata,
-  lastModified: new Date().toISOString()
+  lastModified: new Date().toISOString(),
 });
 ```
 
-> **Note:** Metadata is limited to 60KB when serialized as JSON to comply with Deno KV value size limits.
+> **Note:** Metadata is limited to 60KB when serialized as JSON to comply with
+> Deno KV value size limits.
 
 ---
 

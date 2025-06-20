@@ -180,9 +180,10 @@ class DenoKvFs {
     if (status) {
       return status;
     }
-    
+
     if (options.metadata) {
-      const metaSize = new TextEncoder().encode(JSON.stringify(options.metadata)).length;
+      const metaSize =
+        new TextEncoder().encode(JSON.stringify(options.metadata)).length;
       if (metaSize > 60 * 1024) {
         const status: FileStatus = {
           URIComponent: uri,
@@ -210,7 +211,7 @@ class DenoKvFs {
         return status;
       }
     }
-	
+
     if (options.allowedExtensions!.length > 0) {
       const fileExt = options.path[options.path.length - 1].split(".").pop();
       if (!options.allowedExtensions!.includes(fileExt!)) {
@@ -391,14 +392,18 @@ class DenoKvFs {
     }
     return res;
   }
-  async setMetadata(path: string[], metadata: Record<string, any>): Promise<void> {
+  async setMetadata(
+    path: string[],
+    metadata: Record<string, any>,
+  ): Promise<void> {
     const metaSize = new TextEncoder().encode(JSON.stringify(metadata)).length;
     if (metaSize > 60 * 1024) {
       throw new Error("Metadata exceeds 60KB limit");
     }
-    
+
     await this.#initKv();
-    const file = (await this.#kv!.get(["deno_kv_fs", "files", ...path])).value as File;
+    const file = (await this.#kv!.get(["deno_kv_fs", "files", ...path]))
+      .value as File;
     if (file) {
       file.metadata = metadata;
       await this.#kv!.set(["deno_kv_fs", "files", ...path], file);
@@ -407,7 +412,8 @@ class DenoKvFs {
 
   async getMetadata(path: string[]): Promise<Record<string, any> | undefined> {
     await this.#initKv();
-    const file = (await this.#kv!.get(["deno_kv_fs", "files", ...path])).value as File;
+    const file = (await this.#kv!.get(["deno_kv_fs", "files", ...path]))
+      .value as File;
     return file?.metadata;
   }
   async delete(options: ReadOptions): Promise<void | FileStatus> {
